@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>転職タイプ診断 | エフリーキャリア</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; background: #f5f5f5; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.container { background: #fff; border-radius: 16px; padding: 2rem; max-width: 480px; width: 100%; box-shadow: 0 2px 20px rgba(0,0,0,0.08); }
+.screen { display: none; }
+.screen.active { display: block; }
+.logo { font-size: 13px; color: #888; margin-bottom: 1.5rem; }
+.title { font-size: 22px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; }
+.sub { font-size: 14px; color: #666; line-height: 1.7; margin-bottom: 2rem; }
+.start-btn { background: #534AB7; color: #fff; border: none; border-radius: 10px; padding: 14px 24px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; }
+.progress { display: flex; gap: 6px; margin-bottom: 1.5rem; }
+.progress-dot { height: 4px; flex: 1; border-radius: 2px; background: #eee; transition: background 0.3s; }
+.progress-dot.done { background: #534AB7; }
+.q-label { font-size: 12px; color: #888; margin-bottom: 6px; }
+.q-text { font-size: 18px; font-weight: 600; color: #1a1a1a; margin-bottom: 1.5rem; line-height: 1.5; }
+.options { display: flex; flex-direction: column; gap: 10px; }
+.opt-btn { background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 14px 16px; font-size: 15px; color: #1a1a1a; cursor: pointer; text-align: left; transition: all 0.2s; }
+.opt-btn:hover { border-color: #534AB7; background: #f5f4ff; }
+.result-icon { font-size: 48px; margin-bottom: 12px; text-align: center; }
+.result-type { font-size: 12px; color: #534AB7; font-weight: 600; text-align: center; margin-bottom: 4px; }
+.result-name { font-size: 24px; font-weight: 700; color: #1a1a1a; text-align: center; margin-bottom: 16px; }
+.result-desc { font-size: 14px; color: #555; line-height: 1.8; margin-bottom: 1.5rem; background: #f9f8ff; border-radius: 10px; padding: 1rem; }
+.traits { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 1.5rem; }
+.trait { background: #EEEDFE; color: #3C3489; font-size: 12px; padding: 4px 12px; border-radius: 20px; font-weight: 500; }
+.cta-box { background: #534AB7; border-radius: 12px; padding: 1.5rem; text-align: center; margin-bottom: 12px; }
+.cta-box p { font-size: 14px; color: #fff; margin-bottom: 12px; line-height: 1.6; opacity: 0.9; }
+.cta-btn { background: #fff; color: #534AB7; border: none; border-radius: 8px; padding: 12px 24px; font-size: 15px; font-weight: 700; cursor: pointer; width: 100%; }
+.retry-btn { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 10px; font-size: 14px; color: #888; cursor: pointer; width: 100%; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="screen active" id="start-screen">
+    <p class="logo">エフリーキャリア</p>
+    <p class="title">あなたの転職タイプは？</p>
+    <p class="sub">6つの質問に答えるだけで、あなたに合ったキャリアの方向性がわかります。所要時間：約1分</p>
+    <button class="start-btn" onclick="startQuiz()">診断スタート →</button>
+  </div>
+  <div class="screen" id="quiz-screen">
+    <p class="logo">エフリーキャリア</p>
+    <div class="progress" id="progress"></div>
+    <p class="q-label" id="q-label">質問 1 / 6</p>
+    <p class="q-text" id="q-text"></p>
+    <div class="options" id="options"></div>
+  </div>
+  <div class="screen" id="result-screen">
+    <p class="logo">エフリーキャリア</p>
+    <div class="result-icon" id="r-icon"></div>
+    <p class="result-type">あなたのタイプ</p>
+    <p class="result-name" id="r-name"></p>
+    <div class="result-desc" id="r-desc"></div>
+    <div class="traits" id="r-traits"></div>
+    <div class="cta-box">
+      <p>このタイプに合った求人、実はたくさんあります。<br>まずは気軽にDMで相談してみませんか？</p>
+      <button class="cta-btn" onclick="window.open('https://www.threads.net/@efly_yusaku','_blank')">DMで相談する →</button>
+    </div>
+    <button class="retry-btn" onclick="resetQuiz()">もう一度診断する</button>
+  </div>
+</div>
+<script>
+const questions = [
+  { text: "転職で一番重視したいことは？", options: [{ text: "年収・インセンティブを上げたい", scores: [3,0,0,0,0,0] },{ text: "安定した環境で長く働きたい", scores: [0,3,0,0,0,0] },{ text: "スキルアップ・キャリアアップしたい", scores: [0,0,3,0,0,0] },{ text: "ワークライフバランスを整えたい", scores: [0,0,0,3,0,0] }] },
+  { text: "今の仕事に対して感じていることは？", options: [{ text: "頑張りが給与に反映されない", scores: [2,0,0,1,0,0] },{ text: "将来性が不安", scores: [0,1,2,0,1,0] },{ text: "成長できている実感がない", scores: [0,0,2,0,1,1] },{ text: "とにかく疲弊している", scores: [0,1,0,2,0,1] }] },
+  { text: "理想の働き方に近いのは？", options: [{ text: "成果次第で高収入を目指したい", scores: [3,0,0,0,0,0] },{ text: "安定した収入と職場環境がほしい", scores: [0,3,0,0,0,0] },{ text: "専門性を磨いてプロになりたい", scores: [0,0,2,0,1,1] },{ text: "プライベートも充実させたい", scores: [0,0,0,3,0,0] }] },
+  { text: "転職先の業界・職種について", options: [{ text: "稼げるなら業界は問わない", scores: [2,0,0,0,1,0] },{ text: "今の業界・職種で経験を活かしたい", scores: [0,2,1,0,0,0] },{ text: "全く新しいことに挑戦したい", scores: [0,0,1,0,2,1] },{ text: "コンサル・M&Aなど高度な分野に興味", scores: [0,0,2,0,1,1] }] },
+  { text: "転職活動でのサポートに求めるものは？", options: [{ text: "高収入求人を積極的に紹介してほしい", scores: [3,0,0,0,0,0] },{ text: "自分のペースで丁寧に進めたい", scores: [0,2,0,1,0,0] },{ text: "面接対策・書類添削を手厚くしてほしい", scores: [0,0,2,0,1,1] },{ text: "残業少なめの求人に絞ってほしい", scores: [0,1,0,2,0,0] }] },
+  { text: "転職後、3年後の自分のイメージは？", options: [{ text: "年収1000万円プレイヤーになっている", scores: [3,0,0,0,0,0] },{ text: "同じ会社で信頼されている", scores: [0,3,0,0,0,0] },{ text: "専門家として認められている", scores: [0,0,2,0,1,1] },{ text: "仕事もプライベートも充実している", scores: [0,0,0,2,0,1] }] }
+];
+const types = [
+  { name: "稼ぎ頭タイプ", icon: "💰", desc: "成果に見合った報酬を求める、向上心の塊。インセンティブ制度がある営業・不動産・金融系でその実力を発揮できます。高収入求人が豊富な業界への転職が最適です。", traits: ["高収入志向", "競争心が強い", "自己成長重視", "結果にこだわる"] },
+  { name: "安定・堅実タイプ", icon: "🏠", desc: "長期的な安定を大切にする、信頼される存在。福利厚生が充実した大手・中堅企業で実力を発揮できます。じっくり腰を据えて働ける環境が最適です。", traits: ["安定重視", "継続力がある", "チームプレイヤー", "誠実さが強み"] },
+  { name: "スキルアップ追求タイプ", icon: "📈", desc: "専門性を磨き続けることが原動力。コンサルやM&A、IT系など高度な知識が求められる職種で輝けます。資格や経験を積み上げたい方に最適です。", traits: ["学習意欲が高い", "論理的思考", "専門性重視", "キャリア設計上手"] },
+  { name: "ワーライフバランス重視タイプ", icon: "⚖️", desc: "仕事もプライベートも諦めない、賢い働き方を追求するタイプ。残業少なめ・休日充実の求人を中心にご紹介できます。", traits: ["効率重視", "自己管理上手", "プライベート充実", "長期就業向き"] },
+  { name: "チャレンジャータイプ", icon: "🚀", desc: "新しいことへの挑戦が好きな、変化に強いタイプ。M&A・コンサル・スタートアップなど、未経験でも挑戦できるフィールドが向いています。", traits: ["挑戦心旺盛", "適応力が高い", "変化に強い", "未経験転職向き"] },
+  { name: "バランス追求タイプ", icon: "🌱", desc: "成長も安定も諦めないバランス型。自分の強みを活かしながら、無理なくキャリアアップできる環境を見つけることが成功の鍵です。", traits: ["バランス感覚", "多様な価値観", "柔軟性がある", "着実な成長"] }
+];
+let current = 0, scores = [0,0,0,0,0,0];
+function startQuiz() {
+  document.getElementById('start-screen').classList.remove('active');
+  document.getElementById('quiz-screen').classList.add('active');
+  renderQuestion();
+}
+function renderQuestion() {
+  const q = questions[current];
+  document.getElementById('q-label').textContent = '質問 ' + (current+1) + ' / ' + questions.length;
+  document.getElementById('q-text').textContent = q.text;
+  const opts = document.getElementById('options');
+  opts.innerHTML = '';
+  q.options.forEach(o => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.textContent = o.text;
+    btn.onclick = () => selectOption(o.scores);
+    opts.appendChild(btn);
+  });
+  const prog = document.getElementById('progress');
+  prog.innerHTML = '';
+  for(let i=0; i<questions.length; i++) {
+    const d = document.createElement('div');
+    d.className = 'progress-dot' + (i < current ? ' done' : '');
+    prog.appendChild(d);
+  }
+}
+function selectOption(optScores) {
+  optScores.forEach((s,i) => scores[i] += s);
+  current++;
+  if(current >= questions.length) showResult();
+  else renderQuestion();
+}
+function showResult() {
+  document.getElementById('quiz-screen').classList.remove('active');
+  document.getElementById('result-screen').classList.add('active');
+  const maxIdx = scores.indexOf(Math.max(...scores));
+  const type = types[maxIdx];
+  document.getElementById('r-icon').textContent = type.icon;
+  document.getElementById('r-name').textContent = type.name;
+  document.getElementById('r-desc').textContent = type.desc;
+  const traitsEl = document.getElementById('r-traits');
+  traitsEl.innerHTML = '';
+  type.traits.forEach(t => {
+    const span = document.createElement('span');
+    span.className = 'trait';
+    span.textContent = t;
+    traitsEl.appendChild(span);
+  });
+}
+function resetQuiz() {
+  current = 0; scores = [0,0,0,0,0,0];
+  document.getElementById('result-screen').classList.remove('active');
+  document.getElementById('start-screen').classList.add('active');
+}
+</script>
+</body>
+</html>
